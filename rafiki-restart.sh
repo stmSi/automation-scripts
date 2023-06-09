@@ -1,2 +1,2 @@
-pnpm localenv:stop && pnpm localenv:dbvolumes:remove
-pnpm localenv:start
+pnpm localenv:compose down --volumes
+pnpm localenv:compose up

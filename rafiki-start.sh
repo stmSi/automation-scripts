@@ -1,1 +1,1 @@
-pnpm localenv:start
+pnpm localenv:compose up
