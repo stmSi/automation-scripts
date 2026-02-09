@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# pcd: pick a registered project dir via fzf
+# Usage:
+#   eval "$(pcd --init)"        # put this in ~/.bashrc or ~/.zshrc
+#   pcd                         # then pcd will cd into selection
+#
+# Without init:
+#   cd "$(pcd --print)"         # prints selected directory
+
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/pcd"
+REGISTRY_FILE="$DATA_DIR/projects.txt"
+
+die() { printf 'pcd: %s\n' "$*" >&2; exit 1; }
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "missing dependency: $1"
+}
+
+ensure_registry() {
+  mkdir -p "$DATA_DIR"
+  touch "$REGISTRY_FILE"
+}
+
+# Print shell integration that turns `pcd` into a cd'ing function.
+init_snippet() {
+  cat <<'EOF'
+# pcd shell integration:
+# This defines a function that cds to whatever `pcd --print` selects.
+pcd() {
+  local dir
+  dir="$(command pcd --print "$@")" || return
+  [ -n "$dir" ] || return 1
+  builtin cd -- "$dir" || return
+}
+EOF
+}
+
+print_selection() {
+  require_cmd fzf
+  ensure_registry
+
+  # Read valid directories only, preserving spaces safely.
+  # Avoids command injection by never eval'ing registry content.
+  mapfile -t dirs < <(
+    awk 'NF {print}' "$REGISTRY_FILE" \
+      | while IFS= read -r p; do
+          # Only keep existing directories
+          if [ -d "$p" ]; then
+            printf '%s\n' "$p"
+          fi
+        done
+  )
+
+  ((${#dirs[@]} > 0)) || die "no registered projects. Use: pcd-register /path/to/project"
+
+  # Helpful preview; safe (no eval). If tree isn't installed, falls back to ls.
+  local preview_cmd
+  if command -v tree >/dev/null 2>&1; then
+    preview_cmd='tree -L 2 -a -- {} 2>/dev/null | head -200'
+  else
+    preview_cmd='ls -la -- {} 2>/dev/null | head -200'
+  fi
+
+  # fzf prints the selected directory to stdout.
+  printf '%s\n' "${dirs[@]}" \
+    | fzf --prompt="pcd> " \
+          --height=60% \
+          --layout=reverse \
+          --border \
+          --preview "$preview_cmd" \
+          --preview-window=right:60%
+}
+
+case "${1:-}" in
+  --init)
+    init_snippet
+    ;;
+  --print|"")
+    print_selection
+    ;;
+  -h|--help)
+    cat <<EOF
+Usage:
+  pcd --init            Print shell function integration (recommended)
+  pcd --print           Print selected directory (for: cd "\$(pcd --print)")
+  pcd                  Same as --print when run as a command
+
+Tip:
+  Put this in your shell rc:
+    eval "\$(pcd --init)"
+EOF
+    ;;
+  *)
+    die "unknown option: $1 (try --help)"
+    ;;
+esac
+

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/pcd"
+REGISTRY_FILE="$DATA_DIR/projects.txt"
+
+die() { printf 'pcd-register: %s\n' "$*" >&2; exit 1; }
+
+# Resolve to an absolute, normalized path.
+abspath_dir() {
+  local input="$1"
+  [ -n "$input" ] || die "missing directory argument"
+
+  # Expand ~ safely
+  if [[ "$input" == "~"* ]]; then
+    input="${input/#\~/$HOME}"
+  fi
+
+  [ -d "$input" ] || die "not a directory: $input"
+
+  # Use realpath if available; otherwise use a safe cd+pwd approach.
+  if command -v realpath >/dev/null 2>&1; then
+    realpath -P -- "$input"
+  else
+    (cd -- "$input" && pwd -P)
+  fi
+}
+
+ensure_registry() {
+  mkdir -p "$DATA_DIR"
+  touch "$REGISTRY_FILE"
+}
+
+atomic_update_sorted_unique() {
+  local tmp
+  tmp="$(mktemp "${REGISTRY_FILE}.tmp.XXXXXX")"
+  # Keep only existing dirs, then sort unique.
+  awk 'NF {print}' "$REGISTRY_FILE" \
+    | while IFS= read -r p; do
+        [ -d "$p" ] && printf '%s\n' "$p"
+      done \
+    | LC_ALL=C sort -u >"$tmp"
+  mv -f -- "$tmp" "$REGISTRY_FILE"
+}
+
+main() {
+  ensure_registry
+  local dir
+  dir="$(abspath_dir "${1:-}")"
+
+  # Add if not already present (exact line match).
+  if grep -Fxq -- "$dir" "$REGISTRY_FILE"; then
+    printf 'Already registered: %s\n' "$dir"
+    exit 0
+  fi
+
+  printf '%s\n' "$dir" >>"$REGISTRY_FILE"
+  atomic_update_sorted_unique
+  printf 'Registered: %s\n' "$dir"
+}
+
+main "$@"
+

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/pcd"
+REGISTRY_FILE="$DATA_DIR/projects.txt"
+
+die() { printf 'pcd-unregister: %s\n' "$*" >&2; exit 1; }
+
+ensure_registry() {
+  mkdir -p "$DATA_DIR"
+  touch "$REGISTRY_FILE"
+}
+
+main() {
+  ensure_registry
+
+  local target="${1:-}"
+  [ -n "$target" ] || die "missing directory argument"
+
+  # Expand ~ safely
+  if [[ "$target" == "~"* ]]; then
+    target="${target/#\~/$HOME}"
+  fi
+
+  # Normalize input to absolute path if it exists; if it doesn't, we still allow
+  # removing by exact string match.
+  if [ -d "$target" ]; then
+    if command -v realpath >/dev/null 2>&1; then
+      target="$(realpath -P -- "$target")"
+    else
+      target="$(cd -- "$target" && pwd -P)"
+    fi
+  fi
+
+  if ! grep -Fxq -- "$target" "$REGISTRY_FILE"; then
+    printf 'Not found: %s\n' "$target" >&2
+    exit 1
+  fi
+
+  local tmp
+  tmp="$(mktemp "${REGISTRY_FILE}.tmp.XXXXXX")"
+  # Remove exact match line; keep everything else.
+  grep -Fvx -- "$target" "$REGISTRY_FILE" >"$tmp" || true
+  mv -f -- "$tmp" "$REGISTRY_FILE"
+
+  printf 'Unregistered: %s\n' "$target"
+}
+
+main "$@"
+
