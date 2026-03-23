@@ -2,6 +2,12 @@
 
 Note: Scripts rely on some commands and will not properly run without them.
 
+### KDE WireGuard widget
+
+- source: `~/scripts/kde-wireguard-widget`
+- install or update: `~/scripts/kde-wireguard-widget/install.sh`
+- widget README: `~/scripts/kde-wireguard-widget/README.md`
+
 ### Requirements for each scripts
 
 - docker-shell, docker-start, docker-stop
