@@ -14,6 +14,8 @@ PlasmoidItem {
     id: root
 
     readonly property string helperScript: "/home/stm/scripts/kde-wireguard-widget/wireguard-widget-helper.sh"
+    readonly property string configuredVpnDir: (Plasmoid.configuration.vpnConfigDir || "").trim()
+    readonly property string displayVpnDir: configuredVpnDir.length > 0 ? configuredVpnDir : "~/work/vpn"
     property bool busy: false
     property bool anyActive: false
     property string activeSummary: ""
@@ -27,7 +29,7 @@ PlasmoidItem {
 
     preferredRepresentation: Plasmoid.formFactor === PlasmaCore.Types.Planar ? fullRepresentation : compactRepresentation
     toolTipMainText: anyActive ? "WireGuard connected" : "WireGuard disconnected"
-    toolTipSubText: activeSummary.length > 0 ? activeSummary : "~/work/vpn"
+    toolTipSubText: activeSummary.length > 0 ? activeSummary : displayVpnDir
 
     ListModel {
         id: vpnModel
@@ -38,7 +40,7 @@ PlasmoidItem {
     }
 
     function commandFor(args) {
-        const fullCommand = [root.helperScript].concat(args).map(root.quoteArg).join(" ")
+        const fullCommand = [root.helperScript, "--vpn-dir", root.displayVpnDir].concat(args).map(root.quoteArg).join(" ")
         return "/bin/sh -lc " + root.quoteArg(fullCommand)
     }
 
@@ -213,7 +215,7 @@ PlasmoidItem {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 5
                 visible: vpnModel.count === 0 && !root.busy
-                text: "No WireGuard configs found in ~/work/vpn"
+                text: "No WireGuard configs found in " + root.displayVpnDir
             }
 
             ListView {
@@ -397,6 +399,8 @@ PlasmoidItem {
             refreshStatus()
         }
     }
+
+    onConfiguredVpnDirChanged: refreshStatus()
 
     Component.onCompleted: refreshStatus()
 }

@@ -8,10 +8,10 @@ PLUGIN_ID="com.stm.wireguardswitcher"
 chmod +x "$SCRIPT_DIR/wireguard-widget-helper.sh"
 
 if kpackagetool6 -t Plasma/Applet -s "$PLUGIN_ID" >/dev/null 2>&1; then
-  kpackagetool6 -t Plasma/Applet -u "$PACKAGE_DIR"
-else
-  kpackagetool6 -t Plasma/Applet -i "$PACKAGE_DIR"
+  kpackagetool6 -t Plasma/Applet -r "$PLUGIN_ID"
 fi
+
+kpackagetool6 -t Plasma/Applet -i "$PACKAGE_DIR"
 
 qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
 var panel = panels()[0];

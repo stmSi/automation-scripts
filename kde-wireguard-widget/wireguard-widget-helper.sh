@@ -5,15 +5,36 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SCRIPTS_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
-VPN_DIR="${WIREGUARD_VPN_DIR:-$HOME/work/vpn}"
+USER_HOME=$(cd "$SCRIPT_DIR/../.." && pwd)
+DEFAULT_VPN_DIR="$USER_HOME/work/vpn"
+VPN_DIR=""
 
 usage() {
   cat <<'EOF'
 Usage:
-  wireguard-widget-helper.sh status
-  wireguard-widget-helper.sh up <config.conf>
-  wireguard-widget-helper.sh down [config.conf]
+  wireguard-widget-helper.sh [--vpn-dir <path>] status
+  wireguard-widget-helper.sh [--vpn-dir <path>] up <config.conf>
+  wireguard-widget-helper.sh [--vpn-dir <path>] down [config.conf]
 EOF
+}
+
+normalize_vpn_dir() {
+  local dir="${1:-}"
+
+  if [[ -z "$dir" ]]; then
+    printf '%s\n' "$DEFAULT_VPN_DIR"
+    return 0
+  fi
+
+  if [[ "$dir" == "~" ]]; then
+    dir="$USER_HOME"
+  elif [[ "$dir" == "~/"* ]]; then
+    dir="$USER_HOME/${dir:2}"
+  elif [[ "$dir" != /* ]]; then
+    dir="$USER_HOME/$dir"
+  fi
+
+  printf '%s\n' "$dir"
 }
 
 collect_configs() {
@@ -113,7 +134,31 @@ bring_down() {
 }
 
 main() {
-  local command="${1:-}"
+  local command
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --vpn-dir)
+        [[ $# -ge 2 ]] || {
+          usage >&2
+          exit 1
+        }
+
+        VPN_DIR=$(normalize_vpn_dir "$2")
+        shift 2
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  VPN_DIR="${VPN_DIR:-$DEFAULT_VPN_DIR}"
+  command="${1:-}"
 
   case "$command" in
     status)
@@ -125,7 +170,7 @@ main() {
         exit 1
       }
 
-      run_as_root up-root "$2"
+      run_as_root --vpn-dir "$VPN_DIR" up-root "$2"
       ;;
     up-root)
       [[ $# -eq 2 ]] || {
@@ -142,9 +187,9 @@ main() {
       fi
 
       if [[ $# -eq 2 ]]; then
-        run_as_root down-root "$2"
+        run_as_root --vpn-dir "$VPN_DIR" down-root "$2"
       else
-        run_as_root down-root
+        run_as_root --vpn-dir "$VPN_DIR" down-root
       fi
       ;;
     down-root)

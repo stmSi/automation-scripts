@@ -23,6 +23,8 @@ The script will:
 
 ## Notes
 
-- The widget reads `~/work/vpn/*.conf`
+- The widget reads `~/work/vpn/*.conf` by default
+- You can change the VPN directory in the widget settings, either by typing the path or using the folder browser
+- Paths can be absolute or use `~`
 - Connect and disconnect actions use `pkexec`, so KDE should show an authentication prompt
 - Re-running `install.sh` is the update command too
