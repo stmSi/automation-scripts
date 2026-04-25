@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>URL Bar Blocklist</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="page">
+      <h1>URL Bar Blocklist</h1>
+      <p class="lead">
+        Paste one rule per line. Use a bare domain like <code>example.com</code> to match the domain and subdomains,
+        or a full URL like <code>https://example.com/private</code> to match a URL prefix.
+      </p>
+
+      <label class="label" for="rules">Blocked domains / URL prefixes</label>
+      <textarea id="rules" spellcheck="false" placeholder="example.com&#10;news.example.com&#10;https://example.org/private"></textarea>
+
+      <div class="actions">
+        <button id="save" type="button">Save Rules</button>
+        <button id="purge" type="button">Purge Matching History Now</button>
+      </div>
+
+      <p class="note">
+        This only affects history-based address-bar suggestions. Bookmarks and search suggestions are separate sources.
+      </p>
+
+      <div id="status" class="status" aria-live="polite"></div>
+    </main>
+    <script src="options.js"></script>
+  </body>
+  </html>

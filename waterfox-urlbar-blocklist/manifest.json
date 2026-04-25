@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "Waterfox URL Bar Blocklist",
+  "version": "1.0.0",
+  "description": "Blocks history-based address bar suggestions for configured domains or URL prefixes by auto-deleting matching history.",
+  "permissions": [
+    "history",
+    "storage",
+    "contextMenus",
+    "tabs"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "browser_action": {
+    "default_title": "URL Bar Blocklist"
+  },
+  "applications": {
+    "gecko": {
+      "id": "urlbar-blocklist@stm.local"
+    }
+  }
+}
