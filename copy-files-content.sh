@@ -22,8 +22,12 @@ while [ "$#" -gt 0 ]; do
                 usage
                 exit 1
             fi
+            ignored_dir=$2
+            while [ "$ignored_dir" != "/" ] && [ "${ignored_dir%/}" != "$ignored_dir" ]; do
+                ignored_dir=${ignored_dir%/}
+            done
             ignored_dirs="${ignored_dirs}
-$2"
+$ignored_dir"
             shift 2
             ;;
         -x|--exclude|--ignore-file)
