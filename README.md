@@ -35,6 +35,12 @@ Note: Scripts rely on some commands and will not properly run without them.
         - assuming user run `i3wm` desktop environment in laptop
 
 
+- disable-intel-dpst.ps1
+
+        - Windows laptop with Intel integrated graphics
+        - PowerShell administrator access; the script self-elevates with UAC when needed
+
+
 - ultimate_typing_build (for linux and windows)
 
         - `godot` (Godot 4.x)
